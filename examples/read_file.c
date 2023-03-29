@@ -8,7 +8,7 @@ void show_error(char *);
 
 int main(int argc, char **argv) {
   if (argc <= 1) {
-    printf("Uso %s <archivo a abrir>\n", (char *)argv[0]);
+    printf("Uso: %s <archivo a abrir>\n", (char *)argv[0]);
     exit(1);
   }
 
