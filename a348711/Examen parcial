@@ -1,0 +1,111 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<dirent.h> // Biblioteca para funciones de manejo de directorios.
+
+void meminfo_file(char*f){
+	FILE *fd= fopen(f,"r");
+	char n[20];
+	long tamanomem;
+	float t;
+	fscanf(fd,"%s""%ld",n,&tamanomem);
+	t=tamanomem;
+	printf("\n\nTamaño de memoria del sistema: %f Gb\n",(t/1024)/1024);
+//Abre el archivo "/proc/meminfo" y lee su contenido para obtener información sobre la memoria del sistema, 
+//y luego muestra el tamaño de memoria en gigabytes.
+}
+void info_proceso(char *f){
+	FILE *fd= fopen(f,"r");
+	char name[30],state;
+	float t;
+	int pid,ppid,pgrp,session,tty_nr,tpgid,i=0;
+	unsigned long flags,minflt,cminflt,majflt,cmajflt,utime,stime,starttime,vsize;
+	long cutime,cstime,priority,nice,numthreads,itrealvalue;
+//Abre el archivo "/proc/[PID]/stat" y lee su contenido para obtener información sobre el proceso, 
+//incluyendo su nombre, PID, prioridad ("niceness") y consumo de memoria.
+	if(fd==NULL){
+		printf("Sin archivo stat");
+	}else{
+		fscanf(fd,    "%d "    // pid   ID de proceso
+			      "%s "    // nombre cmd
+			      "%c" "%d" "%d" "%d" "%d" "%d" "%lu" "%lu" 
+			      "%lu" "%lu" "%lu" "%lu" "%lu" "%ld" "%ld" 
+			      "%ld"    //18 prioridad
+			      "%ld"    //19 niceness
+			      "%ld" "%ld" "%lu"
+			      "%lu"    //23  tamaño
+			      ,&pid     // pid
+			      ,name     // nombre cmd
+			      ,&state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime
+			      ,&nice     // nice
+			      ,&numthreads, &itrealvalue, &starttime
+			      ,&vsize);  // tamaño
+//se encarga de imprimir información relevante del proceso cuyo archivo stat se está leyendo
+                printf("%s\n" "\t\t\t %d\t "  "%ld\t",name,pid,nice);
+                if(vsize==0){
+                	printf("%lu B\n",vsize);
+                }else{
+                	vsize=vsize/1024;
+                	printf("%lu Kb\n",vsize);
+                }
+                 fclose(fd);
+	}
+}
+//se utiliza la función proc_kernel para determinar si un proceso es de kernel o de usuario. 
+//Esta función lee el archivo cmdline del proceso correspondiente y verifica si hay algún contenido en él. 
+//Si el archivo está vacío, entonces se considera que el proceso es del kernel, de lo contrario, 
+//se considera que es un proceso de usuario.
+void proc_kernel(char *f){
+	FILE *fd=fopen(f,"r");
+	char n;
+	
+	if(fd==NULL){
+		printf("archivo cmdline faltante");
+	}else{
+		if((n=fgetc(fd))==EOF){
+			printf("Proceso de Kernel\n");
+		}else{
+			printf("Proceso de Usuario\n");
+		}
+	}
+	fclose(fd);
+}
+//función principal del programa, que abre el directorio "/proc" y 
+//busca todos los subdirectorios que contienen números (que corresponden a los PIDs de los procesos activos).
+//Luego llama a las funciones "proc_kernel" e "info_proceso" para cada proceso y 
+//muestra la información de cada uno en la consola.
+int main(int argc, char *argv[])
+{
+	DIR *dir;
+	struct dirent *sd;
+	char dirName[255];
+	dir = opendir("/proc");
+	
+	if(dir==NULL)
+	{
+		printf("Error, no se pudo abrir el directorio.\n");
+		exit(1);
+	}
+	// memoria del sistema
+	strcpy(dirName, "/proc/meminfo");
+	meminfo_file(dirName);
+	
+	printf("\n\t\t\tProcesos activos del sistema\n");
+	printf ("\tNombre\t" "\tPID\t" "Niceness  " "Consume\n ");
+	
+	while((sd=readdir(dir)) !=NULL)
+	{
+		if((*sd->d_name>'0') && (*sd->d_name<='9')){
+			strcpy(dirName, "/proc/");
+			strcat(dirName, sd->d_name);
+			strcat(dirName, "/cmdline");
+			proc_kernel(dirName);
+			strcpy(dirName, "/proc/");
+			strcat(dirName, sd->d_name);
+			strcat(dirName, "/stat");
+			info_proceso(dirName);
+		}
+	}
+	closedir(dir);
+	return 0;
+}
