@@ -30,6 +30,7 @@ void Bucle(char *comando){
 			printf("PID: %d\n", pid);
 			printf("cmdline: %s\n", cmdline);
 			printf("Prioridad: %d\n", priority);
+			printf("Niceness: %d\n", nice);
 		}
 		fclose(fd);
 	}
