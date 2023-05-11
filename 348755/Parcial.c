@@ -6,7 +6,7 @@
 
 void get_process_info(char *filename) {
     long int id, priority,vsize;
-    char cmdline[1024];
+    char comm[1024];
     char line[1000];
 
     FILE *file = fopen(filename, "r");
@@ -18,10 +18,10 @@ void get_process_info(char *filename) {
     while (fgets(line, sizeof(line), file)) {
         printf ("\n");
             sscanf(line, "%d %s %*c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld %ld %*ld %*ld %*ld %*lu %lu,",
-            &id, cmdline, &priority, &vsize);
+            &id, comm, &priority, &vsize);
 
             printf("ID: %d\n", id);
-            printf("NOMBRE: %s\n", cmdline);
+            printf("NOMBRE: %s\n", comm);
             printf("PRIORIDAD: %d\n", priority);
             printf("MEMORIA: %lu kB\n", vsize);
     }
@@ -34,6 +34,7 @@ void get_process_type(char *filname){
     
     if(file==NULL){
         printf("No se pudo abrir el directorio /proc/[pid]/cmdline\n");
+        return;
     }else{
         if((n=fgetc(file))==EOF){
             printf("PROCESO: Kernel\n");
@@ -58,7 +59,7 @@ int main() {
     }
 
     // Leer directorio /proc
-    while ((ent = readdir(dir)) != NULL) {
+    while ((ent = readdir(dir))) {
         if (isdigit (ent->d_name[0])) {
             strcpy(pid, ent->d_name);
             sprintf(filename, "/proc/%s/stat", pid);
